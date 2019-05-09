@@ -19,6 +19,7 @@ use Kdyby\Monolog\Tracy\BlueScreenRenderer;
 use Kdyby\Monolog\Tracy\MonologAdapter;
 use Nette\Configurator;
 use Nette\DI\Compiler;
+use Nette\DI\Definitions\ServiceDefinition;
 use Nette\DI\Helpers as DIHelpers;
 use Nette\DI\Statement;
 use Nette\PhpGenerator\ClassType as ClassTypeGenerator;
@@ -32,8 +33,6 @@ use Tracy\ILogger;
  */
 class MonologExtension extends \Nette\DI\CompilerExtension
 {
-
-	use \Kdyby\StrictObjects\Scream;
 
 	const TAG_HANDLER = 'monolog.handler';
 	const TAG_PROCESSOR = 'monolog.processor';
@@ -57,11 +56,10 @@ class MonologExtension extends \Nette\DI\CompilerExtension
 	{
 		$builder = $this->getContainerBuilder();
 
-		$config = $this->getConfig($this->defaults);
+		$config = $this->getConfig() + $this->defaults;
 		$config['logDir'] = self::resolveLogDir($builder->parameters);
 		self::createDirectory($config['logDir']);
 		$this->setConfig($config);
-
 		if (!isset($builder->parameters[$this->name]) || (is_array($builder->parameters[$this->name]) && !isset($builder->parameters[$this->name]['name']))) {
 			$builder->parameters[$this->name]['name'] = $config['name'];
 		}
@@ -71,11 +69,11 @@ class MonologExtension extends \Nette\DI\CompilerExtension
 		}
 
 		$builder->addDefinition($this->prefix('logger'))
-			->setClass(KdybyLogger::class, [$config['name']]);
+			->setFactory(KdybyLogger::class, [$config['name']]);
 
 		// Tracy adapter
 		$builder->addDefinition($this->prefix('adapter'))
-			->setClass(MonologAdapter::class, [
+			->setFactory(MonologAdapter::class, [
 				'monolog' => $this->prefix('@logger'),
 				'blueScreenRenderer' => $this->prefix('@blueScreenRenderer'),
 				'email' => Debugger::$email,
@@ -85,7 +83,7 @@ class MonologExtension extends \Nette\DI\CompilerExtension
 
 		// The renderer has to be separate, to solve circural service dependencies
 		$builder->addDefinition($this->prefix('blueScreenRenderer'))
-			->setClass(BlueScreenRenderer::class, [
+			->setFactory(BlueScreenRenderer::class, [
 				'directory' => $config['logDir'],
 			])
 			->setAutowired(FALSE)
@@ -106,13 +104,12 @@ class MonologExtension extends \Nette\DI\CompilerExtension
 		$builder = $this->getContainerBuilder();
 
 		foreach ($config['handlers'] as $handlerName => $implementation) {
-			Compiler::loadDefinitions($builder, [
-				$serviceName = $this->prefix('handler.' . $handlerName) => $implementation,
-			]);
+			$def = new ServiceDefinition();
+			$def->setFactory($implementation);
 
-			$builder->getDefinition($serviceName)
-				->addTag(self::TAG_HANDLER)
+			$def->addTag(self::TAG_HANDLER)
 				->addTag(self::TAG_PRIORITY, is_numeric($handlerName) ? $handlerName : 0);
+			$builder->addDefinition($this->prefix('handler.' . $handlerName), $def);
 		}
 	}
 
@@ -123,13 +120,13 @@ class MonologExtension extends \Nette\DI\CompilerExtension
 		if ($config['usePriorityProcessor'] === TRUE) {
 			// change channel name to priority if available
 			$builder->addDefinition($this->prefix('processor.priorityProcessor'))
-				->setClass(PriorityProcessor::class)
+				->setFactory(PriorityProcessor::class)
 				->addTag(self::TAG_PROCESSOR)
 				->addTag(self::TAG_PRIORITY, 20);
 		}
 
 		$builder->addDefinition($this->prefix('processor.tracyException'))
-			->setClass(TracyExceptionProcessor::class, [
+			->setFactory(TracyExceptionProcessor::class, [
 				'blueScreenRenderer' => $this->prefix('@blueScreenRenderer'),
 			])
 			->addTag(self::TAG_PROCESSOR)
@@ -137,7 +134,7 @@ class MonologExtension extends \Nette\DI\CompilerExtension
 
 		if ($config['tracyBaseUrl'] !== NULL) {
 			$builder->addDefinition($this->prefix('processor.tracyBaseUrl'))
-				->setClass(TracyUrlProcessor::class, [
+				->setFactory(TracyUrlProcessor::class, [
 					'baseUrl' => $config['tracyBaseUrl'],
 					'blueScreenRenderer' => $this->prefix('@blueScreenRenderer'),
 				])
@@ -146,13 +143,12 @@ class MonologExtension extends \Nette\DI\CompilerExtension
 		}
 
 		foreach ($config['processors'] as $processorName => $implementation) {
-			Compiler::loadDefinitions($builder, [
-				$serviceName = $this->prefix('processor.' . $processorName) => $implementation,
-			]);
 
-			$builder->getDefinition($serviceName)
-				->addTag(self::TAG_PROCESSOR)
+			$def = new ServiceDefinition();
+			$def->setFactory($implementation);
+			$def->addTag(self::TAG_PROCESSOR)
 				->addTag(self::TAG_PRIORITY, is_numeric($processorName) ? $processorName : 0);
+			$builder->addDefinition($this->prefix('processor.' . $processorName), $def);
 		}
 	}
 
@@ -169,7 +165,7 @@ class MonologExtension extends \Nette\DI\CompilerExtension
 			$logger->addSetup('pushProcessor', ['@' . $serviceName]);
 		}
 
-		$config = $this->getConfig(['registerFallback' => empty($handlers)] + $this->getConfig($this->defaults));
+		$config = $this->defaults + ['registerFallback' => empty($handlers)] + $this->getConfig();
 
 		if ($config['registerFallback']) {
 			$logger->addSetup('pushHandler', [
