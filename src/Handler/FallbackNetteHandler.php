@@ -20,8 +20,6 @@ use Monolog\Logger as MonologLogger;
 class FallbackNetteHandler extends \Monolog\Handler\ErrorLogHandler
 {
 
-	use \Kdyby\StrictObjects\Scream;
-
 	/**
 	 * @var string
 	 */

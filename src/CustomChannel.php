@@ -16,8 +16,6 @@ use Monolog\Handler\HandlerInterface;
 class CustomChannel extends \Monolog\Logger
 {
 
-	use \Kdyby\StrictObjects\Scream;
-
 	/**
 	 * @var \Kdyby\Monolog\Logger
 	 */

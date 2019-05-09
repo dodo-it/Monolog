@@ -15,8 +15,6 @@ use Tracy\BlueScreen;
 class BlueScreenRenderer extends \Tracy\Logger
 {
 
-	use \Kdyby\StrictObjects\Scream;
-
 	public function __construct($directory, BlueScreen $blueScreen)
 	{
 		parent::__construct($directory, NULL, $blueScreen);

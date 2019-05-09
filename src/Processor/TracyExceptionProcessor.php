@@ -15,8 +15,6 @@ use Kdyby\Monolog\Tracy\BlueScreenRenderer;
 class TracyExceptionProcessor
 {
 
-	use \Kdyby\StrictObjects\Scream;
-
 	/**
 	 * @var \Kdyby\Monolog\Tracy\BlueScreenRenderer
 	 */

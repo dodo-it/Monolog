@@ -20,8 +20,6 @@ use Tracy\Helpers;
 class MonologAdapter extends \Tracy\Logger
 {
 
-	use \Kdyby\StrictObjects\Scream;
-
 	const ACCESS = 'access';
 
 	/**

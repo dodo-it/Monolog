@@ -19,8 +19,6 @@ use Monolog\Logger as MonologLogger;
 class PriorityProcessor
 {
 
-	use \Kdyby\StrictObjects\Scream;
-
 	public function __invoke($record)
 	{
 		if (isset($record['context']['channel'])) {

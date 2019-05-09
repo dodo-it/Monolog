@@ -13,8 +13,6 @@ namespace Kdyby\Monolog\Handler;
 class NewRelicHandler extends \Monolog\Handler\NewRelicHandler
 {
 
-	use \Kdyby\StrictObjects\Scream;
-
 	/**
 	 * {@inheritdoc}
 	 */

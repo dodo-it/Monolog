@@ -13,8 +13,6 @@ namespace Kdyby\Monolog;
 class Logger extends \Monolog\Logger
 {
 
-	use \Kdyby\StrictObjects\Scream;
-
 	/**
 	 * @param string $channel
 	 * @return \Kdyby\Monolog\CustomChannel

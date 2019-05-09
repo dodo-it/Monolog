@@ -15,8 +15,6 @@ use Kdyby\Monolog\Tracy\BlueScreenRenderer;
 class TracyUrlProcessor
 {
 
-	use \Kdyby\StrictObjects\Scream;
-
 	/**
 	 * @var string
 	 */
